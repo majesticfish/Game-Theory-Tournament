@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Phillip Wang  and Chris Huang lost to Quan in Chess Finals </title>
+		<h1> End of year tournament </h1>
+	</head>
+	<body>
+		<textarea id = "name">Enter Name Here!</textarea>
+		<textarea id = "points">100</textarea>
+		<button onClick = "addNewPlayer()"> Add new player </button>
+		<br></br>
+		<button onClick = "publicGoods(3)">Public goods with multiplier 3</button>
+		<button onClick = "minorityGame()"> Minority Game </button>
+		<button onClick = "twoThirdsGame(0.66666666)"> 2/3s Game </button>
+		<button onClick = "twoThirdsGame(1.5)">3/2s Game</button>
+		<button onClick = "publicGoods(6)">Public goods with multiplier 6</button>
+		<button onClick = "topbotFifteen()">Middle game </button>
+		<button onClick = "generateWinners()"> Generate Winners</button>
+	</body>
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script>
+		var dummyId = 0;
+		var outputId = 1000;
+		var textareaId = 1000000;
+		var players = [];
+		var inputs = [];
+		var scores = []
+		function getData(){
+			inputs = inputs.splice(0,0);
+			for(index in players){
+				if(!isNaN(parseInt(document.getElementById(players[index].textareaId).value))){
+					inputs.push(parseInt(document.getElementById(players[index].textareaId).value));
+					players[index].money -= inputs[inputs.length-1];			
+				}
+			}
+		}
+		function setData(){
+			for(index in players){
+				if(!document.getElementById(players[index].outputId)) continue;
+				document.getElementById(players[index].outputId).innerHTML = players[index].money;
+			}	
+		}
+		function removeElement(id){
+			document.getElementById(id).remove();
+			var special =[], one, two, l = players.length;
+			for(index in players){
+				if(players[index].id == id){
+					continue;
+				}
+				special.push(players[index]);
+			}
+			players = special;
+			for(index in players){
+				console.log(players[index]);
+			}
+		}
+		function addNewEntry(player){
+			var htmlStuff ="<div id = %id%>"+ "<b>Name: </b>"
+			+"<output>%name% </output>" + 
+			"<b> Money: </b>" + "<output id = %outputId%>%money% </output>" + 
+			"<textarea id = %textareaId%></textarea>" + 
+			"<button onClick = 'removeElement(%id%)'>Remove</button>"+"</div>";
+			htmlStuff = htmlStuff.replace("%name%", player.name);
+			htmlStuff = htmlStuff.replace("%money%",player.money);
+			htmlStuff = htmlStuff.replace("%id%",player.id);
+			htmlStuff = htmlStuff.replace("%id%", '"' + player.id + '"');
+			htmlStuff = htmlStuff.replace("%outputId%",'"'+player.outputId+'"');
+			htmlStuff = htmlStuff.replace("%textareaId%",'"'+player.textareaId+'"');
+			console.log(htmlStuff);
+			$(htmlStuff).appendTo($("body"));
+		}
+		function addNewPlayer(){
+			var player = {
+				"name" : document.getElementById("name").value,
+				"money" : parseInt(document.getElementById("points").value),
+				"id" : dummyId,
+				"outputId" : outputId,
+				"textareaId" : textareaId,
+			};
+			console.log(player.money);
+			dummyId = dummyId+1;
+			outputId ++;
+			textareaId ++;
+			addNewEntry(player);
+			players.push(player);
+			$(".name").value = '';
+		}
+		function publicGoods(multiplier){
+			getData();
+			var total= 0, numberDonated = 0, eightyOrMore = false, average;
+			for(index in inputs){
+				total += inputs[index];
+				if(inputs[index] > 0) numberDonated++;
+			}
+			console.log(total);
+			average = total*parseInt(multiplier);
+			average/= inputs.length;
+			if(numberDonated*5 >= inputs.length*4) eightyOrMore = true;
+			var counter = 0;
+			for(index in players){
+				if(!document.getElementById(players[index].outputId)){
+					counter++;
+					continue;
+				}
+				if(eightyOrMore && inputs[index-counter]==0){
+					players[index].money += 0;
+				}else if(eightyOrMore){
+					players[index].money += average*1.5;	
+				}	
+				console.log(players[index].money);
+			} 
+			setData();
+		}
+		function minorityGame(){
+			getData();
+			var peopleAtBar = 0, crowded = false;
+			for(index in inputs){
+				if(inputs[index] == 1){
+					players[index].money++;
+					peopleAtBar ++;
+				}
+			}
+			if(peopleAtBar*5>=2*inputs.length){
+				crowded = true;
+				console.log("THE BAR WAS CROWDED");
+			}
+			var counter = 0;
+			for(index in players){
+				if(!document.getElementById(players[index].outputId)){
+					counter++;
+					continue;
+				}
+				if(crowded && inputs[index-counter]==1){
+					players[index].money -= 20;
+				}else if(!crowded && inputs[index-counter]==1){
+					players[index].money += 25;
+				}
+			}
+			setData();
+		}
+		function twoThirdsGame(multiplier){
+			getData();
+			var total = 0.0, winners =[], keyPoint = 0.0, maxDistance = 9000000.0,  distance = [], winnerValues = [];
+			for(index in inputs) total+= inputs[index];
+			keyPoint = total*multiplier/inputs.length;
+			console.log(keyPoint);	
+			for(index in inputs){
+				distance.push(Math.abs(inputs[index]-keyPoint));
+			}
+			distance.sort(function(a,b){return a-b});
+			for(index in distance){
+				if(index > 0 && distance[index] == distance[index-1]) continue;
+				winnerValues.push(distance[index]);
+				if(winnerValues.length >= 4) break;
+			}
+			for(index in inputs){
+				for(index2 in winnerValues){
+					if(Math.abs(keyPoint -inputs[index]) == winnerValues[index2]) winners.push(index);
+				}
+			}
+			for(index in winners){
+				players[winners[index]].money +=total/4;
+				console.log(players[winners[index]].name + " WON");
+			}
+			setData();
+		}
+		function topbotFifteen(){
+			getData();
+			var fifteenPercent = 0, total = 0, winners = [], maxDistance = inputs[0], highWinners = [], setPoint = 9000000.0;
+			for(index in inputs){
+				total += inputs[index];
+			}
+			fifteenPercent = parseInt(3*inputs.length/20);
+			var distribution = total/(inputs.length-2*fifteenPercent)
+			for(index in inputs){
+				if(winners.length < fifteenPercent){
+					if(inputs[index] > maxDistance){
+						maxDistance = inputs[index];
+					}
+					winners.push(index);
+				}else{
+					if(inputs[index] < maxDistance){
+						var newWinners =[];
+						for(index2 in winners){
+							if(inputs[winners[index2]] != maxDistance) newWinners.push(winners[index2]);
+						}
+						maxDistance = Math.abs(inputs[index]);
+						newWinners.push(index);
+						winners = newWinners;
+					}
+				}
+			}
+			maxDistance = setPoint - inputs[0];
+			for(index in inputs){
+				if(highWinners.length < fifteenPercent){
+					if(setPoint - inputs[index] > maxDistance){
+						maxDistance = setPoint - inputs[index];
+					}
+					highWinners.push(index);
+				}else{
+					if(setPoint - inputs[index] < maxDistance){
+						var newWinners =[];
+						for(index2 in highWinners){
+							if(setPoint - inputs[highWinners[index2]] != maxDistance) newWinners.push(highWinners[index2]);
+						}
+						maxDistance = Math.abs(setPoint - inputs[index]);
+						newWinners.push(index);
+						highWinners = newWinners;
+					}
+				}
+			}
+			for(index in players){
+				players[index].money += distribution;
+			}
+			for(index in winners){
+				players[winners[index]].money -= distribution;
+				console.log(players[winners[index]].name+ " LOST");
+			}
+			for(index in highWinners){
+				players[highWinners[index]].money -= distribution;
+				console.log(players[highWinners[index]].name + " LOST");
+			}
+			setData();
+		}
+		function generateWinners(){
+			players.sort(function(a,b){return b.money-a.money});
+			for(index in players){
+				var htmlStuff = "<div>" + "<b>Place: " + index  + "</b>" + "<b> Name: " + players[index].name + "</b>" + "<b> Score: " + players[index].money + "</b></div>";
+				$(htmlStuff).appendTo($("body"));
+			}
+		}
+	</script>
+</html>
